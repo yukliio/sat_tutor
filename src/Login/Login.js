@@ -10,10 +10,41 @@ const LoginPage = () => {
   });
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async(e) => {
     e.preventDefault();
     console.log(formData);
+    try{
+      const response = await fetch('http://localhost:3000/login',{
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      }
+      ); 
 
+    if (response.ok) {
+      const data = await response.json(); // Parse JSON response
+      console.log(data); // Log the response for debugging
+  
+      if (data.emailExist) {
+        if (data.userFound) {
+          console.log('Login successful!');
+          navigate('/home');
+        } else {
+          setError('Incorrect password.');
+        }
+      } else {
+        setError('Email not found.');
+      }
+    } 
+      else {
+      setError('Server error. Please try again later.');
+    }
+    } 
+    catch (err) {
+      console.log(err);
+    }
   };
 
   const handleChange = (e) => {

@@ -2,6 +2,7 @@ import pg from 'pg';
 import express from 'express';
 import bodyParser from 'body-parser';
 const app = express();
+
 const db = new pg.Client({
     user: "postgres", 
     host: "localhost",
@@ -22,7 +23,6 @@ db.connect((err) => {
 
 app.use(bodyParser.json());
 
-
 app.post('/submit', async (req, res) => {
     const { username, email, password } = req.body;
     const query = 'INSERT INTO user_info (username, email, password) VALUES ($1, $2, $3)';
@@ -36,6 +36,39 @@ app.post('/submit', async (req, res) => {
         console.error('Error executing query', err.stack);
         res.status(500).send('Error registering user');
     }
+});
+
+app.post('/login', async (req, res) => {
+    var userFound, emailExist= false;
+    const { email, password } = req.body;
+    const query = 'SELECT EXISTS (SELECT 1 FROM user_info WHERE email = $1)';
+    try {
+        const result = await db.query(query, [email]);
+        if (result.rows[0].exists){
+            emailExist = true;
+            const query = 'SELECT * FROM user_info WHERE email = $1 AND password = $2'; 
+            try{
+                const result = await db.query(query, [email, password]);
+                if(result.rows.length > 0){
+                    userFound = true;
+                }
+                else{
+                    userFound = false;
+                }
+            }
+            catch (err){
+                console.log(err);
+            }
+        }
+        else{
+            emailExist = false;
+        }
+    }
+    catch (err){
+        console.log(err);
+    }
+    res.json({ emailExist, userFound });
+    
 });
 
 
